@@ -158,7 +158,7 @@
     /* ── S1 VIDEO ────────────────────────────────── */
     .sec-vid { background: var(--white); }
     .vid-wrap {
-      width: 100%; aspect-ratio: 9/16; max-height: 58svh;
+      width: 100%; aspect-ratio: 9/16; max-height: calc(100svh - 180px);
       background: #DDD; border-radius: 14px; overflow: hidden;
       position: relative; align-self: center;
     }
@@ -433,7 +433,7 @@
         <p class="tag rv">Смотри</p>
         <p class="sh rv" style="margin-bottom:14px;">Включи звук и смотри</p>
       </div>
-      <div class="vid-wrap rv" id="vidWrap" style="cursor:pointer;" onclick="playFullscreen()">
+      <div class="vid-wrap rv" id="vidWrap">
         <video
           id="mainVid"
           src="https://raw.githubusercontent.com/arsenyplisetsky/welcomeagents/main/0327(5).mp4"
@@ -465,46 +465,46 @@
         </div>
       </div>
 
+        <!-- Fullscreen hint -->
+        <div id="fsHint" style="
+          position:absolute;
+          bottom:52px;right:10px;
+          opacity:0;
+          transition:opacity .3s, transform .3s;
+          pointer-events:none;
+          display:flex;flex-direction:column;align-items:center;gap:4px;
+          z-index:10;
+        ">
+          <div style="
+            background:#FF5A1E;
+            color:white;
+            font-family:'Rubik',sans-serif;
+            font-size:0.72rem;font-weight:600;
+            padding:5px 10px;border-radius:8px;
+            white-space:nowrap;
+            box-shadow:0 2px 8px rgba(0,0,0,0.3);
+          ">Развернуть ↙</div>
+        </div>
       <script>
-        function playFullscreen() {
-          var vid = document.getElementById('mainVid');
-          var overlay = document.getElementById('playOverlay');
 
-          // Hide overlay
-          overlay.style.opacity = '0';
-          setTimeout(function(){ overlay.style.display = 'none'; }, 200);
-
-          // Play video
-          vid.play();
-
-          // Request fullscreen (cross-browser)
-          var el = document.getElementById('vidWrap');
-          if (el.requestFullscreen) {
-            el.requestFullscreen();
-          } else if (el.webkitRequestFullscreen) {
-            el.webkitRequestFullscreen();
-          } else if (vid.webkitEnterFullscreen) {
-            // iOS Safari fallback — fullscreen on video element directly
-            vid.webkitEnterFullscreen();
-          }
-
-          // Show native controls once playing
-          vid.setAttribute('controls', true);
-        }
-
-        // If user exits fullscreen — pause is fine, overlay stays hidden
-        document.addEventListener('fullscreenchange', function() {
-          var vid = document.getElementById('mainVid');
-          if (!document.fullscreenElement) {
-            vid.pause();
-          }
-        });
-        document.addEventListener('webkitfullscreenchange', function() {
-          var vid = document.getElementById('mainVid');
-          if (!document.webkitFullscreenElement) {
-            vid.pause();
-          }
-        });
+        // Show fullscreen hint after play starts
+        document.getElementById('mainVid').addEventListener('play', function() {
+          var hint = document.getElementById('fsHint');
+          if (!hint) return;
+          setTimeout(function() {
+            hint.style.opacity = '1';
+            // pulse 3 times then fade out
+            var count = 0;
+            var iv = setInterval(function() {
+              hint.style.transform = count % 2 === 0 ? 'scale(1.2)' : 'scale(1)';
+              count++;
+              if (count >= 7) {
+                clearInterval(iv);
+                hint.style.opacity = '0';
+              }
+            }, 400);
+          }, 1200);
+        }, { once: true });
       </script>
       <div class="rv" style="display:flex;justify-content:center;">
         <a href="#s2" class="btn-outline">Читать текстом ↓</a>
