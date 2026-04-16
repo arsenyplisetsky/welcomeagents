@@ -157,11 +157,19 @@
 
     /* ── S1 VIDEO ────────────────────────────────── */
     .sec-vid { background: var(--white); }
-    .sec-vid .inner { padding-left: 0; padding-right: 0; }
+    .sec-vid .inner { padding-left: 0; padding-right: 0; padding-top: 12px; padding-bottom: 12px; gap: 10px; }
     .vid-wrap {
-      width: 100%; aspect-ratio: 9/16; max-height: calc(100svh - 180px);
-      background: #DDD; border-radius: 14px; overflow: hidden;
-      position: relative; align-self: center;
+      /* Edge-to-edge, full remaining height */
+      width: calc(100% + var(--px) * 2);
+      margin-left: calc(var(--px) * -1);
+      aspect-ratio: 9/16;
+      height: calc(100svh - var(--hdr) - 80px);
+      max-height: none;
+      background: #FF5A1E;
+      border-radius: 0;
+      overflow: hidden;
+      position: relative;
+      flex-shrink: 0;
     }
     .vid-ph {
       position: absolute; inset: 0;
@@ -441,43 +449,42 @@
   <!-- ═══ S1 ВИДЕО ══════════════════════════════════════ -->
   <section class="sec sec-vid snap" id="s1">
     <div class="inner">
-      <div>
-        <p class="tag rv">Смотри</p>
-        <p class="sh rv" style="margin-bottom:14px;">Включи звук и смотри</p>
-      </div>
-      <div class="vid-wrap rv" id="vidWrap" style="cursor:pointer;" onclick="startPlay()">
+
+      <div class="vid-wrap rv" id="vidWrap">
         <video
           id="mainVid"
           src="https://raw.githubusercontent.com/arsenyplisetsky/welcomeagents/main/welcome.mp4"
+          controls
           playsinline
-          preload="metadata"
-          style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;background:#000;">
+          preload="none"
+          style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;background:#FF5A1E;">
         </video>
-        <!-- Custom play button overlay -->
-        <div id="playOverlay" style="
+
+        <!-- Overlay: shown before play, hidden on first play -->
+        <div id="playOverlay" onclick="
+          this.style.display='none';
+          var v=document.getElementById('mainVid');
+          v.play();
+        " style="
           position:absolute;inset:0;
           background:#FF5A1E;
           display:flex;align-items:center;justify-content:center;
-          transition:opacity .2s;cursor:pointer;
+          cursor:pointer;
+          z-index:2;
         ">
-          <!-- Logo top -->
           <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAJwAAABACAIAAABgJolOAAAD2ElEQVR4nO1cW3bjIAwlPVlHva96fVlYVtJ+pHWxAaEnyI7umY+2gx7mIhAg+/b99ZmqeDwrf1yXeuOAJ9wqpFbp3CDhFdAcw0UPBakwoxsYHHQ1B69K+Nj9hmSUAYxmO+tvho9+kypIBOAbB68a4JKa0AQET8MhIDXZEBaDQAwZqV0EQzMgJjVo84eMVHV62ApjoMigMf0GB85gtqYG0/NgnCi1EIdHllAilRSXwagxbCL13ebex9PVI99HG1QJU/ZtD+M+MRcpW+b/+/qZ5ACyN4hu60XqZth6zML6dYPmoEr9WkKisC07NlEShimeMKP7BmpjuWx3BNegTercyztJe0UNWp3AjWNVUu1KJnjwlLyMdOaP1MFlCcPCbnq0sSG4hMZF6tyd5fT+zcHrCq1HwFkftaUxGha5Wruk105bq1tkDlDWVG8nQQd/tDrIbckj2vqQLY1FVam3EdbCmCGytzLpQN8thoUpWxtCkEiq8/iwc29kfiRe0XGkSsw4Hwc5dHPUeWszffr1QJKFD84nXoqU8Zpq/wDm0J147R4ts3iHPHgfDNuYDpFlRSpyuNnsrHU0zILk2HL71wN3+u3y6moKleCEA0iwpgK0zWJ0MAGTdixdyBKlKnlyRr0FxzB/lAyJs9912bGoHqNOpnE/mVQX66K0pXlRO5KAsl9UdhFA41Pwui4ppbu7uQ6P8Z4/npwhAlSOsfcR4LOf4ZJcYp3BAaPIlG0ao43++DNuaZwskwfYnQVKintZOMnVm/VxI/K+Xd2uuonHM53pBSmqCJtRnjmGCTNBBKkDyovURVRadskmjQa4sWrSd/v++pxZlVOaFuYXXXH43Rhqe0VtjK5ovGOTffGM178Bf6h9mzBwcpwk+w1QEKReEEHqBRGkXhBB6gURpF4QQeoFEaQq4XV04+NyOkjVgw9G0+6l49ZngDCf/qnKln8s7/oxZ6cYPS0fWrYORjFHpFsb+DEBN2AruWDr55aJvW9FpHaHG744qNosb8z4SlFX1uLLKIcSaqCiWuUF52oUARYL3+7/v8DIVbeKa0glPIeBD2tWQTeY4IswrWsyWE9rPjg0aN3q61ySdyc9GJsgpj7IGkK2JDPNAVXOMO9c/FYTpj0xL0n5xWFVEOEQRw/GfyQk77potRS+0kKo+83Lerv9e14Iq5cxsl0T8OSPwP4b+t10o5W7wqUIyJ6Cp5dND7DYCNOlbikCSVzSmF3a8ZsolSszJiWrmiElO+tSYZERJUj/Saqqzljk1SVe3ZL23UjckvxFqsooExb8DSvapioE8mShA9RqNJwnP/PO5jx7PhjrAAAAAElFTkSuQmCC" alt="Мокка" style="
             position:absolute;top:24px;left:50%;transform:translateX(-50%);
             height:34px;
           ">
-
-          <!-- Play button center -->
           <div style="
-            width:82px;height:82px;background:white;border-radius:50%;
+            width:84px;height:84px;background:white;border-radius:50%;
             display:flex;align-items:center;justify-content:center;
-            box-shadow:0 0 0 16px rgba(255,255,255,0.2);
+            box-shadow:0 0 0 18px rgba(255,255,255,0.2);
           ">
             <svg width="30" height="30" viewBox="0 0 30 30" fill="none">
               <path d="M11 8l16 7.5-16 7.5V8z" fill="#FF5A1E"/>
             </svg>
           </div>
-
-          <!-- Bottom text -->
           <div style="
             position:absolute;bottom:28px;left:0;right:0;
             text-align:center;padding:0 20px;
@@ -487,59 +494,17 @@
               font-size:clamp(1.4rem,6vw,1.9rem);
               font-weight:700;color:white;
               line-height:1.2;text-transform:uppercase;
+              margin-bottom:8px;
             ">Добро пожаловать<br>в команду!</div>
+            <div style="
+              font-family:'Rubik',sans-serif;
+              font-size:0.8rem;font-weight:500;
+              color:rgba(255,255,255,0.8);
+              letter-spacing:0.5px;
+            ">🔊 Включи звук перед просмотром</div>
           </div>
         </div>
-
-        <!-- Fullscreen hint -->
-        <div id="fsHint" style="
-          position:absolute;
-          bottom:52px;right:10px;
-          opacity:0;
-          transition:opacity .3s, transform .3s;
-          display:flex;flex-direction:column;align-items:center;gap:4px;
-          z-index:10;
-        ">
-          <div style="
-            background:#FF5A1E;
-            color:white;
-            font-family:'Rubik',sans-serif;
-            font-size:0.72rem;font-weight:600;
-            padding:5px 10px;border-radius:8px;
-            white-space:nowrap;
-            box-shadow:0 2px 8px rgba(0,0,0,0.3);
-          ">Развернуть ↙</div>
-        </div>
-      <script>
-
-        function startPlay() {
-          var vid = document.getElementById('mainVid');
-          var overlay = document.getElementById('playOverlay');
-          overlay.style.opacity = '0';
-          setTimeout(function(){ overlay.style.display = 'none'; }, 200);
-          vid.play();
-          vid.setAttribute('controls', true);
-        }
-
-        // Show fullscreen hint after play starts
-        document.getElementById('mainVid').addEventListener('play', function() {
-          var hint = document.getElementById('fsHint');
-          if (!hint) return;
-          setTimeout(function() {
-            hint.style.opacity = '1';
-            // pulse 3 times then fade out
-            var count = 0;
-            var iv = setInterval(function() {
-              hint.style.transform = count % 2 === 0 ? 'scale(1.2)' : 'scale(1)';
-              count++;
-              if (count >= 7) {
-                clearInterval(iv);
-                hint.style.opacity = '0';
-              }
-            }, 400);
-          }, 1200);
-        }, { once: true });
-      </script>
+      </div>
       <div class="rv" style="display:flex;justify-content:center;">
         <a href="#s2" class="btn-outline">Читать текстом ↓</a>
       </div>
