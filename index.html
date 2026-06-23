@@ -248,7 +248,7 @@
   </div>
   <div class="hdr-top" id="hdrPortal" style="display:none;">
     <button class="hdr-back" onclick="goHome()">← На главную</button>
-    <span id="hdrCounter" style="font-size:0.68rem;font-weight:600;color:var(--or);background:var(--or-lt);padding:3px 8px;border-radius:10px;">Пройдено&nbsp;<b id="hdrProgNum">0</b>&nbsp;из 6</span>
+    
   </div>
   <div class="hdr-section" id="hdrSection"><span class="hdr-sec-name" id="hdrSecName"></span><span class="hdr-sep" id="hdrSep" style="display:none"> > </span><span class="hdr-sec-tag" id="hdrSecTag"></span></div>
   <div id="tabs"><div class="tab-row"><button class="tab" id="tab-s0" onclick="openSection('s0')">О продукте</button><button class="tab" id="tab-s1" onclick="openSection('s1')">Твоя выгода</button><button class="tab" id="tab-s2" onclick="openSection('s2')">Начать продавать</button></div><div class="tab-row"><button class="tab" id="tab-s3" onclick="openSection('s3')"><span class="pro-badge" aria-hidden="true">PRO</span>Разобраться самому</button><button class="tab" id="tab-s4" onclick="openSection('s4')"><span class="pro-badge" aria-hidden="true">PRO</span>Нужна помощь</button><button class="tab" id="tab-s5" onclick="openSection('s5')"><span class="pro-badge" aria-hidden="true">PRO</span>Скрипты</button></div></div>
@@ -341,7 +341,6 @@ function markCardDone(sid) {
 function updateCounter() {
   const completed = done.size;
   document.querySelectorAll('.progNum').forEach(el => el.textContent = completed);
-  const hn = document.getElementById('hdrProgNum'); if(hn) hn.textContent = completed;
   if (completed === 6 && typeof showSecretBonus === 'function') showSecretBonus();
 }
 
