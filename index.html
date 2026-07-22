@@ -280,7 +280,7 @@
       <input class="modal-input" id="phoneInput" type="tel" placeholder="+7 (___) ___-__-__" inputmode="tel" autocomplete="tel" oninput="formatPhone(this)" aria-label="Номер телефона">
       <div class="modal-error" id="phoneError">Введи корректный номер телефона</div>
       <div class="modal-consent"><label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;padding:6px 0;"><input type="checkbox" id="consentCheck" style="width:20px;height:20px;flex-shrink:0;margin-top:1px;accent-color:var(--or);cursor:pointer;"><span style="font-size:0.85rem;line-height:1.4;">Согласен на обработку персональных данных Мокка</span></label></div>
-      <div id="diagBox" style="display:none;margin-bottom:10px;padding:8px 10px;background:#111;border-radius:8px;"><p style="color:#8f8;font-size:0.65rem;font-family:monospace;margin:0 0 4px;">Диагностика отправки (видно только сейчас):</p><pre id="diagText" style="color:#0f0;font-size:0.6rem;font-family:monospace;white-space:pre-wrap;margin:0;max-height:120px;overflow-y:auto;"></pre></div><button class="modal-submit" id="modalSubmit" onclick="submitPhone()" disabled>Получить бонус →</button>
+      <button class="modal-submit" id="modalSubmit" onclick="submitPhone()" disabled>Получить бонус →</button>
     </div>
     <div class="modal-success" id="modalSuccess" style="display:none;">
       <div class="modal-success-icon">✅</div>
@@ -300,6 +300,31 @@ const done = new Set();
 // ── PRIZE SYSTEM ─────────────────────────────────────────────────────────────
 // TODO: заменить на реальный URL после настройки TG-бота
 const WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbxrhWtKhT3x-hQVPTmqzqAHatsFRpF11KrbypKT4DnYzUGtFi2So_423C0LSF7GU5EsFA/exec';
+
+// ── DAILY HEALTH CHECK ──────────────────────────────────────────────────────
+// Пишет тестовую строку раз в сутки, чтобы отслеживать что webhook жив.
+// Телефон-маркер 00000000000 легко фильтруется в таблице/Telegram.
+(function healthCheck() {
+  try {
+    const KEY = 'mokka_healthcheck_last';
+    const last = localStorage.getItem(KEY);
+    const now = Date.now();
+    if (last && (now - parseInt(last, 10)) < 24 * 60 * 60 * 1000) return; // уже было сегодня
+    localStorage.setItem(KEY, String(now));
+    fetch(WEBHOOK_URL, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify({
+        phone: '+70000000000',
+        ts: new Date().toLocaleString('ru-RU'),
+        sessions: 0,
+        source: 'healthcheck'
+      })
+    }).catch(e => console.error('[Mokka healthcheck] network error', e));
+  } catch (e) { /* localStorage недоступен — тихо пропускаем */ }
+})();
+
 const PRIZE_DAYS = 3;
 const PRIZE_SESSIONS = 3;
 const STORAGE_KEY = 'mokka_portal_v1';
@@ -397,40 +422,19 @@ async function submitPhone() {
   }
   const btn = document.getElementById('modalSubmit');
   btn.disabled = true; btn.textContent = 'Отправляем…';
-  const diagLog = [];
-  const diagBox = document.getElementById('diagBox');
-  const diagText = document.getElementById('diagText');
-  function diag(msg) {
-    const line = new Date().toLocaleTimeString('ru-RU') + '  ' + msg;
-    diagLog.push(line);
-    console.log('[Mokka webhook]', line);
-    if (diagText) diagText.textContent = diagLog.join('\n');
-    if (diagBox) diagBox.style.display = 'block';
-  }
-  diag('URL: ' + WEBHOOK_URL);
   const payload = {
     phone:'+'+phone,
     ts:new Date().toLocaleString('ru-RU'),
     sessions:loadState().sessions||1,
     source:'mokka-portal'
   };
-  diag('Тело запроса: ' + JSON.stringify(payload));
-  try {
-    diag('Отправка fetch()...');
-    const t0 = performance.now();
-    await fetch(WEBHOOK_URL, {
-      method:'POST',
-      mode:'no-cors',
-      headers:{'Content-Type':'text/plain'},
-      body:JSON.stringify(payload)
-    });
-    const dt = Math.round(performance.now() - t0);
-    diag('fetch() завершён за ' + dt + 'мс (mode:no-cors — статус ответа недоступен браузеру, это нормально)');
-    diag('Если через минуту нет строки в таблице/Telegram — смотри Apps Script → Выполнения (Executions)');
-  } catch (netErr) {
-    diag('❌ СЕТЕВАЯ ОШИБКА до отправки: ' + netErr.message);
-    diag('Проверь: интернет-соединение, блокировщики рекламы, CSP-политику хостинга');
-  }
+  console.log('[Mokka webhook] sending', payload);
+  await fetch(WEBHOOK_URL, {
+    method:'POST',
+    mode:'no-cors',
+    headers:{'Content-Type':'text/plain'},
+    body:JSON.stringify(payload)
+  }).catch(e => console.error('[Mokka webhook] network error', e));
   const s = loadState(); s.prizeClaimed = true; saveState(s);
   document.getElementById('modalForm').style.display = 'none';
   document.getElementById('modalSuccess').style.display = 'block';
