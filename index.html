@@ -301,30 +301,6 @@ const done = new Set();
 // TODO: заменить на реальный URL после настройки TG-бота
 const WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbxrhWtKhT3x-hQVPTmqzqAHatsFRpF11KrbypKT4DnYzUGtFi2So_423C0LSF7GU5EsFA/exec';
 
-// ── DAILY HEALTH CHECK ──────────────────────────────────────────────────────
-// Пишет тестовую строку раз в сутки, чтобы отслеживать что webhook жив.
-// Телефон-маркер 00000000000 легко фильтруется в таблице/Telegram.
-(function healthCheck() {
-  try {
-    const KEY = 'mokka_healthcheck_last';
-    const last = localStorage.getItem(KEY);
-    const now = Date.now();
-    if (last && (now - parseInt(last, 10)) < 24 * 60 * 60 * 1000) return; // уже было сегодня
-    localStorage.setItem(KEY, String(now));
-    fetch(WEBHOOK_URL, {
-      method: 'POST',
-      mode: 'no-cors',
-      headers: { 'Content-Type': 'text/plain' },
-      body: JSON.stringify({
-        phone: '+70000000000',
-        ts: new Date().toLocaleString('ru-RU'),
-        sessions: 0,
-        source: 'healthcheck'
-      })
-    }).catch(e => console.error('[Mokka healthcheck] network error', e));
-  } catch (e) { /* localStorage недоступен — тихо пропускаем */ }
-})();
-
 const PRIZE_DAYS = 3;
 const PRIZE_SESSIONS = 3;
 const STORAGE_KEY = 'mokka_portal_v1';
@@ -413,6 +389,28 @@ function checkSubmitReady() {
   document.getElementById('modalSubmit').disabled = !ok;
 }
 
+function sendToWebhook(payload) {
+  const body = JSON.stringify(payload);
+  console.log('[Mokka webhook] sending', payload);
+  // 1) sendBeacon — гарантированно ставит запрос в очередь на отправку,
+  //    даже если страница закроется/свернётся сразу после вызова.
+  //    Критично для слабого интернета и старых Android-браузеров.
+  if (navigator.sendBeacon) {
+    const blob = new Blob([body], { type: 'text/plain' });
+    const queued = navigator.sendBeacon(WEBHOOK_URL, blob);
+    if (queued) { console.log('[Mokka webhook] sendBeacon: поставлен в очередь'); return; }
+    console.warn('[Mokka webhook] sendBeacon отклонён браузером, использую fetch-фоллбэк');
+  }
+  // 2) Фоллбэк: fetch с keepalive — тоже переживает уход со страницы
+  fetch(WEBHOOK_URL, {
+    method: 'POST',
+    mode: 'no-cors',
+    headers: { 'Content-Type': 'text/plain' },
+    body,
+    keepalive: true
+  }).catch(e => console.error('[Mokka webhook] fetch fallback error', e));
+}
+
 async function submitPhone() {
   const phone = document.getElementById('phoneInput').value.replace(/\D/g,'');
   if (phone.length !== 11) {
@@ -422,19 +420,12 @@ async function submitPhone() {
   }
   const btn = document.getElementById('modalSubmit');
   btn.disabled = true; btn.textContent = 'Отправляем…';
-  const payload = {
+  sendToWebhook({
     phone:'+'+phone,
     ts:new Date().toLocaleString('ru-RU'),
     sessions:loadState().sessions||1,
     source:'mokka-portal'
-  };
-  console.log('[Mokka webhook] sending', payload);
-  await fetch(WEBHOOK_URL, {
-    method:'POST',
-    mode:'no-cors',
-    headers:{'Content-Type':'text/plain'},
-    body:JSON.stringify(payload)
-  }).catch(e => console.error('[Mokka webhook] network error', e));
+  });
   const s = loadState(); s.prizeClaimed = true; saveState(s);
   document.getElementById('modalForm').style.display = 'none';
   document.getElementById('modalSuccess').style.display = 'block';
